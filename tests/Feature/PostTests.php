@@ -89,7 +89,6 @@ class PostTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => []
             ],
             [
                 'id'          => 2,
@@ -98,7 +97,6 @@ class PostTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => '2023-08-31 14:02:34',
-                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -107,7 +105,6 @@ class PostTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => []
             ]];
 
         $expectedJson = [
@@ -143,8 +140,8 @@ class PostTests extends TestCase
                 ],
                 'path'         => 'http://localhost/api/posts',
                 'per_page'     => 10,
-                'to'           => 3,
-                'total'        => 3
+                'to'           => 2,
+                'total'        => 2
             ]];
 
         $this->seedFakePosts($generatedPosts);

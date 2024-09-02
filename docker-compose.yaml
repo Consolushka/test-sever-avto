@@ -1,0 +1,57 @@
+version: '3.9'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: dockerfiles
+      target: dev
+    container_name: sever-avto_app
+    restart: unless-stopped
+    environment:
+      - PHP_IDE_CONFIG=serverName=sever-avto.local
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./dockerfiles/dev/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: sever-avto_webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www
+      - ./dockerfiles/dev/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+  db:
+    container_name: sever-avto_db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    volumes:
+      - sever-avto:/var/lib/postgresql/data:rw
+      - ./dockerfiles/configs/db/enable_extra-settings.sh:/docker-entrypoint-initdb.d/enable_extra-settings.sh
+      - ./dockerfiles/configs/db/postgresql.conf:/etc/postgresql/conf.d/postgresql.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  sever-avto:
+    external: true
