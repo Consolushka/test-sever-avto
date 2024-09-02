@@ -1,0 +1,8 @@
+POST http://0.0.0.0/api/posts
+Accept: application/json
+Content-Type: application/json
+
+{
+  "title": "Fourth",
+  "description": "Fourth post Description"
+}

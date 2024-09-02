@@ -1,0 +1,8 @@
+PATCH http://0.0.0.0/api/posts/1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "title": "44 asfdd 3",
+  "description": "Third 3 post Description"
+}
