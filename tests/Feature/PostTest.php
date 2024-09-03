@@ -2,35 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\Comment;
 use App\Models\Post;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-class CommentTests extends TestCase
+class PostTest extends TestCase
 {
     public function test_it_returns_list(): void
     {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
-
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -39,7 +19,6 @@ class CommentTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => []
             ],
             [
                 'id'          => 2,
@@ -48,7 +27,6 @@ class CommentTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => $generatedComments
             ],
             [
                 'id'          => 3,
@@ -57,41 +35,124 @@ class CommentTests extends TestCase
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => []
             ]];
-
         $expectedJson = [
-            'data' => $generatedComments
+            'data'  => $generatedPosts,
+            'links' => [
+                'first' => 'http://localhost/api/posts?page=1',
+                'last'  => 'http://localhost/api/posts?page=1',
+                'prev'  => null,
+                'next'  => null
+            ],
+            'meta'  => [
+                'current_page' => 1,
+                'from'         => 1,
+                'last_page'    => 1,
+                'links'        => [
+                    0 => [
+                        'url'    => null,
+                        'label'  => '&laquo; Previous',
+                        'active' => false
+                    ],
+                    1 => [
+                        'url'    => 'http://localhost/api/posts?page=1',
+                        'label'  => '1',
+                        'active' => true
+                    ],
+                    2 => [
+                        'url'    => null,
+                        'label'  => 'Next &raquo;',
+                        'active' => false
+                    ]
+                ],
+                'path'         => 'http://localhost/api/posts',
+                'per_page'     => 10,
+                'to'           => 3,
+                'total'        => 3
+            ]
         ];
 
         $this->seedFakePosts($generatedPosts);
 
-        $response = $this->getJson('api/posts/2/comments')->json();
+        $response = $this->getJson('api/posts?page=1&size=3')->json();
 
         self::assertEquals($expectedJson, $response);
     }
 
-    public function test_it_returns_empty_list(): void
+    public function test_it_returns_list_wo_deleted_posts(): void
     {
-        $generatedComments = [
+        $generatedPosts = [
             [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
+                'id'          => 1,
+                'title'       => 'Post #1',
+                'description' => 'Post #1 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => null,
             ],
             [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
+                'id'          => 2,
+                'title'       => 'Post #2',
+                'description' => 'Post #2 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => '2023-08-31 14:02:34',
+            ],
+            [
+                'id'          => 3,
+                'title'       => 'Post #3',
+                'description' => 'Post #3 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => null,
+            ]];
 
+        $expectedJson = [
+            'data'  => array_values(array_filter($generatedPosts, function ($item) {
+                return $item['deleted_at'] === null;
+            })),
+            'links' => [
+                'first' => 'http://localhost/api/posts?page=1',
+                'last'  => 'http://localhost/api/posts?page=1',
+                'prev'  => null,
+                'next'  => null
+            ],
+            'meta'  => [
+                'current_page' => 1,
+                'from'         => 1,
+                'last_page'    => 1,
+                'links'        => [
+                    0 => [
+                        'url'    => null,
+                        'label'  => '&laquo; Previous',
+                        'active' => false
+                    ],
+                    1 => [
+                        'url'    => 'http://localhost/api/posts?page=1',
+                        'label'  => '1',
+                        'active' => true
+                    ],
+                    2 => [
+                        'url'    => null,
+                        'label'  => 'Next &raquo;',
+                        'active' => false
+                    ]
+                ],
+                'path'         => 'http://localhost/api/posts',
+                'per_page'     => 10,
+                'to'           => 2,
+                'total'        => 2
+            ]];
+
+        $this->seedFakePosts($generatedPosts);
+
+        $response = $this->getJson('api/posts?page=1&size=3')->json();
+
+        self::assertEquals($expectedJson, $response);
+    }
+
+    public function test_it_returns_single_post(): void
+    {
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -108,8 +169,8 @@ class CommentTests extends TestCase
                 'description' => 'Post #2 description',
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -120,39 +181,23 @@ class CommentTests extends TestCase
                 'deleted_at'  => null,
                 'comments'    => []
             ]];
+        $id = 3;
 
         $expectedJson = [
-            'data' => []
+            'data' => array_values(array_filter($generatedPosts, function ($item) use ($id) {
+                return $item['id'] === $id;
+            }))[0]
         ];
 
         $this->seedFakePosts($generatedPosts);
 
-        $response = $this->getJson('api/posts/3/comments')->json();
+        $response = $this->getJson("api/posts/$id")->json();
 
         self::assertEquals($expectedJson, $response);
     }
 
-    public function test_it_returns_single_comment(): void
+    public function test_it_returns_throws_with_no_post(): void
     {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
-
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -169,8 +214,8 @@ class CommentTests extends TestCase
                 'description' => 'Post #2 description',
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -181,41 +226,135 @@ class CommentTests extends TestCase
                 'deleted_at'  => null,
                 'comments'    => []
             ]];
+        $id = 4;
 
+        $this->seedFakePosts($generatedPosts);
+
+        $errorMessage = $this->getJson("api/posts/$id")->json('message');
+
+
+        self::assertEquals("No query results for model [App\Models\Post] $id", $errorMessage);
+    }
+
+    public function test_it_returns_throws_with_deleted_post(): void
+    {
+        $generatedPosts = [
+            [
+                'id'          => 1,
+                'title'       => 'Post #1',
+                'description' => 'Post #1 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => null,
+                'comments'    => []
+            ],
+            [
+                'id'          => 2,
+                'title'       => 'Post #2',
+                'description' => 'Post #2 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
+            ],
+            [
+                'id'          => 3,
+                'title'       => 'Post #3',
+                'description' => 'Post #3 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => null,
+                'comments'    => []
+            ]];
         $id = 2;
 
-        $expectedJson = [
-            'data' => $generatedComments[1]
-        ];
-
         $this->seedFakePosts($generatedPosts);
 
-        $response = $this->getJson("api/posts/2/comments/$id")->json();
+        $errorMessage = $this->getJson("api/posts/$id")->json('message');
 
-        self::assertEquals($expectedJson, $response);
+
+        self::assertEquals("No query results for model [App\Models\Post] $id", $errorMessage);
     }
 
-    public function test_it_throws_on_null_comment(): void
+    public function test_it_creates_post(): void
     {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
+        $newPostTitle = 'Post #4';
+        $newPostDescription = 'Post #4 description';
+        $expectedJson = [
+            'data' => [
+                'id'          => 1,
+                'title'       => $newPostTitle,
+                'description' => $newPostDescription,
+                'created_at'  => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at'  => Carbon::now()->format('Y-m-d H:i:s'),
+                'deleted_at'  => null,
             ]
         ];
 
+        $actualResponse = $this->postJson("api/posts", [
+            'title'       => $newPostTitle,
+            'description' => $newPostDescription
+        ]);
+
+        $actualResponse->assertStatus(201);
+        self::assertEquals($expectedJson, $actualResponse->json());
+
+
+        $dbPost = Post::query()->where('title', $newPostTitle)->first();
+        $this->assertNotNull($dbPost);
+        self::assertEquals($newPostTitle, $dbPost->title);
+        self::assertEquals($newPostDescription, $dbPost->description);
+    }
+
+    public function test_it_requires_title_and_description(): void
+    {
+        $expectedJson = [
+            'title'       => ['The title field is required.'],
+            'description' => ['The description field is required.'],
+        ];
+
+        $actualResponse = $this->postJson("api/posts", [
+            'title'       => '',
+            'description' => null
+        ])->json('errors');
+
+
+        self::assertEquals($expectedJson, $actualResponse);
+    }
+
+    public function test_it_validates_title_and_description_min_length(): void
+    {
+        $expectedJson = [
+            'title'       => ['The title field must be at least 5 characters.'],
+            'description' => ['The description field must be at least 10 characters.'],
+        ];
+
+        $actualResponse = $this->postJson("api/posts", [
+            'title'       => 'fi',
+            'description' => 'one two'
+        ])->json('errors');
+
+
+        self::assertEquals($expectedJson, $actualResponse);
+    }
+
+    public function test_it_validates_title_max_length(): void
+    {
+        $expectedJson = [
+            'title' => ['The title field must not be greater than 255 characters.'],
+        ];
+
+        $actualResponse = $this->postJson("api/posts", [
+            'title'       => Str::random(256),
+            'description' => 'one two three four'
+        ])->json('errors');
+
+
+        self::assertEquals($expectedJson, $actualResponse);
+    }
+
+    public function test_it_updates_post(): void
+    {
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -232,8 +371,8 @@ class CommentTests extends TestCase
                 'description' => 'Post #2 description',
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -245,36 +384,41 @@ class CommentTests extends TestCase
                 'comments'    => []
             ]];
 
-        $id = 5;
 
+        $id = 1;
         $this->seedFakePosts($generatedPosts);
 
-        $errorMessage = $this->getJson("api/posts/2/comments/$id")->json('message');
+        $newPostTitle = 'Post #11';
+        $newPostDescription = 'Post #11 description';
 
-        self::assertEquals("No query results for model [App\Models\Comment] $id", $errorMessage);
-    }
-
-    public function test_it_throws_on_deleted_comment(): void
-    {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => '2023-08-31 14:02:34',
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
+        $expectedJson = [
+            'data' => [
+                'id'          => 1,
+                'title'       => $newPostTitle,
+                'description' => $newPostDescription,
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => Carbon::now()->format('Y-m-d H:i:s'),
+                'deleted_at'  => null,
             ]
         ];
 
+        $actualResponse = $this->patchJson("api/posts/$id", [
+            'title'       => $newPostTitle,
+            'description' => $newPostDescription
+        ]);
+
+        $actualResponse->assertStatus(200);
+        self::assertEquals($expectedJson, $actualResponse->json());
+
+
+        $dbPost = Post::query()->find($id);
+        $this->assertNotNull($dbPost);
+        self::assertEquals($newPostTitle, $dbPost->title);
+        self::assertEquals($newPostDescription, $dbPost->description);
+    }
+
+    public function test_it_throws_on_update_null_post(): void
+    {
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -291,8 +435,57 @@ class CommentTests extends TestCase
                 'description' => 'Post #2 description',
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
+            ],
+            [
+                'id'          => 3,
+                'title'       => 'Post #3',
+                'description' => 'Post #3 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
                 'deleted_at'  => null,
-                'comments'    => $generatedComments
+                'comments'    => []
+            ]];
+
+        $id = 4;
+        $this->seedFakePosts($generatedPosts);
+
+        $newPostTitle = 'Post #4';
+        $newPostDescription = 'Post #4 description';
+
+        $actualResponse = $this->patchJson("api/posts/$id", [
+            'title'       => $newPostTitle,
+            'description' => $newPostDescription
+        ]);
+
+        self::assertEquals("No query results for model [App\Models\Post] $id", $actualResponse->json('message'));
+
+
+        $dbPost = Post::query()->find($id);
+        $this->assertNull($dbPost);
+    }
+
+    public function test_it_deletes_post(): void
+    {
+        $generatedPosts = [
+            [
+                'id'          => 1,
+                'title'       => 'Post #1',
+                'description' => 'Post #1 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => null,
+                'comments'    => []
+            ],
+            [
+                'id'          => 2,
+                'title'       => 'Post #2',
+                'description' => 'Post #2 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => '2023-08-31 14:02:34',
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -305,229 +498,35 @@ class CommentTests extends TestCase
             ]];
 
         $id = 1;
-
         $this->seedFakePosts($generatedPosts);
 
-        $errorMessage = $this->getJson("api/posts/2/comments/$id")->json('message');
-
-        self::assertEquals("No query results for model [App\Models\Comment] $id", $errorMessage);
-    }
-
-    public function test_it_validated_content_field(): void
-    {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
-
-        $generatedPosts = [
-            [
-                'id'          => 1,
-                'title'       => 'Post #1',
-                'description' => 'Post #1 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ],
-            [
-                'id'          => 2,
-                'title'       => 'Post #2',
-                'description' => 'Post #2 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
-            ],
-            [
-                'id'          => 3,
-                'title'       => 'Post #3',
-                'description' => 'Post #3 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ]];
-
-        $expectedJson = 'The content field is required.';
-
-        $this->seedFakePosts($generatedPosts);
-
-        $response = $this->postJson("api/posts/2/comments",[
-            'content' => ''
-        ])->json('message');
-
-        self::assertEquals($expectedJson, $response);
-    }
-
-    public function test_it_validated_content_field_max_length(): void
-    {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
-
-        $generatedPosts = [
-            [
-                'id'          => 1,
-                'title'       => 'Post #1',
-                'description' => 'Post #1 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ],
-            [
-                'id'          => 2,
-                'title'       => 'Post #2',
-                'description' => 'Post #2 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
-            ],
-            [
-                'id'          => 3,
-                'title'       => 'Post #3',
-                'description' => 'Post #3 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ]];
-
-        $expectedJson = 'The content field must not be greater than 1000 characters.';
-
-        $this->seedFakePosts($generatedPosts);
-
-        $response = $this->postJson("api/posts/2/comments",[
-            'content' => Str::random(1001)
-        ])->json('message');
-
-        self::assertEquals($expectedJson, $response);
-    }
-
-    public function test_it_creates_comment(): void
-    {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
-            ]
-        ];
-
-        $generatedPosts = [
-            [
-                'id'          => 1,
-                'title'       => 'Post #1',
-                'description' => 'Post #1 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ],
-            [
-                'id'          => 2,
-                'title'       => 'Post #2',
-                'description' => 'Post #2 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
-            ],
-            [
-                'id'          => 3,
-                'title'       => 'Post #3',
-                'description' => 'Post #3 description',
-                'created_at'  => '2023-08-31 14:02:34',
-                'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => []
-            ]];
+        $deletedDate = Carbon::now()->format('Y-m-d H:i:s');
 
         $expectedJson = [
-            'id'         => 3,
-            'post_id'    => 2,
-            'content'    => 'Comment #3',
-            'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-            'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
-            'deleted_at' => null,
-        ];
-
-        $this->seedFakePosts($generatedPosts);
-
-        $response = $this->postJson("api/posts/2/comments",[
-            'content' => 'Comment #3'
-        ])->json('data');
-
-        self::assertEquals($expectedJson, $response);
-
-        $dbComment = Comment::query()->find(3);
-        self::assertNotNull($dbComment);
-        self::assertEquals('Comment #3', $dbComment->content);
-    }
-
-    public function test_it_updates_comment(): void
-    {
-        $generatedComments = [
-            [
-                'id'         => 1,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-08-31 14:02:34',
-                'updated_at' => '2023-08-31 14:02:34',
-                'deleted_at' => null,
-            ],
-            [
-                'id'         => 2,
-                'post_id'    => 2,
-                'content'    => 'Comment #1',
-                'created_at' => '2023-09-30 14:02:34',
-                'updated_at' => '2023-09-30 14:02:34',
-                'deleted_at' => null,
+            'data' => [
+                'id'          => 1,
+                'title'       => 'Post #1',
+                'description' => 'Post #1 description',
+                'created_at'  => '2023-08-31 14:02:34',
+                'updated_at'  => $deletedDate,
+                'deleted_at'  => $deletedDate,
             ]
         ];
 
+        $actualResponse = $this->deleteJson("api/posts/$id");
+
+        $actualResponse->assertStatus(200);
+        self::assertEquals($expectedJson, $actualResponse->json());
+
+
+        $dbPost = Post::withTrashed()->find($id);
+        $this->assertNotNull($dbPost);
+        self::assertEquals($deletedDate, $dbPost->updated_at->format('Y-m-d H:i:s'));
+        self::assertEquals($deletedDate, $dbPost->deleted_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_it_throws_on_delete_null_post(): void
+    {
         $generatedPosts = [
             [
                 'id'          => 1,
@@ -544,8 +543,8 @@ class CommentTests extends TestCase
                 'description' => 'Post #2 description',
                 'created_at'  => '2023-08-31 14:02:34',
                 'updated_at'  => '2023-08-31 14:02:34',
-                'deleted_at'  => null,
-                'comments'    => $generatedComments
+                'deleted_at'  => '2023-08-31 14:02:34',
+                'comments'    => []
             ],
             [
                 'id'          => 3,
@@ -557,46 +556,25 @@ class CommentTests extends TestCase
                 'comments'    => []
             ]];
 
-        $newContent = 'Comment #22';
-        $id = 2;
-
-        $expectedJson = [
-            'id'         => 2,
-            'post_id'    => 2,
-            'content'    => $newContent,
-            'created_at' => '2023-09-30 14:02:34',
-            'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
-            'deleted_at' => null,
-        ];
-
+        $id = 4;
         $this->seedFakePosts($generatedPosts);
 
-        $response = $this->patchJson("api/posts/2/comments/$id",[
-            'content' => $newContent
-        ])->json('data');
+        $actualResponse = $this->deleteJson("api/posts/$id");
 
-        self::assertEquals($expectedJson, $response);
+        self::assertEquals("No query results for model [App\Models\Post] $id", $actualResponse->json('message'));
 
-        $dbComment = Comment::query()->find($id);
-        self::assertNotNull($dbComment);
-        self::assertEquals($newContent, $dbComment->content);
+
+        $dbPost = Post::query()->find($id);
+        $this->assertNull($dbPost);
     }
 
     private function seedFakePosts(array $posts): void
     {
-        $comments = array_merge(...array_map(function ($item) {
-            return $item['comments'];
-        }, array_filter($posts, function ($post) {
-            return !empty($post['comments']);
-        })));
-
         $posts = array_map(function ($post) {
             unset($post['comments']);
             return $post;
         }, $posts);
 
         Post::factory()->createMany($posts);
-        Comment::factory()->createMany($comments);
     }
-
 }
